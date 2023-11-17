@@ -1,10 +1,12 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
-import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 
-contract Pack is ERC721 {
+contract Pack is ERC721Enumerable {
     mapping(uint256 => address) private tokenIdTBAMap;
+
+    constructor() ERC721("Pack", "PK") {}
 
     function unpack(
         address userWalletAddres,
@@ -15,14 +17,15 @@ contract Pack is ERC721 {
         if (unpackIndicator != address(this)) {
             return;
         }
-        // burn
-        burn(tokenId);
+        _burn(tokenId);
 
         // Openイベントをemit
         // イベント検知時に交換前NFTのburnと交換後NFTのmintを実行
     }
 
-    function getTokenIdsByOwner(address owner) public {
+    function getTokenIdsByOwner(
+        address owner
+    ) public returns (uint256[] memory) {
         uint256 tokenCount = balanceOf(owner);
         uint256[] memory tokenIds = new uint256[](tokenCount);
         for (uint256 i; i < tokenCount; i++) {
@@ -30,7 +33,7 @@ contract Pack is ERC721 {
         }
     }
 
-    function getTBAAddress(uint256 tokenId) public {
+    function getTbaAddress(uint256 tokenId) public returns (address) {
         return tokenIdTBAMap[tokenId];
     }
 }

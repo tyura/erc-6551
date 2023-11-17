@@ -9,7 +9,7 @@ contract PackSet600 is ERC721 {
     PackSet100 private packSet100;
     mapping(uint256 => address) public tokenIdTBAMap;
 
-    constructor(address _packSet100) {
+    constructor(address _packSet100) ERC721("PackSet600", "PS600") {
         packSet100 = PackSet100(_packSet100);
     }
 
@@ -18,16 +18,19 @@ contract PackSet600 is ERC721 {
         uint256 tokenId,
         address unpackIndicator
     ) public {
-        address tbaAddress600 = tokenIdTBAMap[tokenId];
-        uint256[] tokenIds100 = packSet100.getTokenIdsByOwner(tbaAddress);
-        uint256[] memory tbaAddresses100 = new uint256[](tokenIds100);
-        PackSetTBA packSetTBA = PackSetTBA();
-        for (uint256 i; i < tokenIds100.length; i++) {
+        address ps600TbaAddress = tokenIdTBAMap[tokenId];
+        uint256[] memory ps100TokenIds = packSet100.getTokenIdsByOwner(
+            ps600TbaAddress
+        );
+        for (uint256 i; i < ps100TokenIds.length; i++) {
+            address tbaAddress = packSet100.getTbaAddress(ps100TokenIds[i]);
             // tbaからユーザにtransfer
-            packSetTBA.transferNFT(userWalletAddres, tokenIds100[i]);
+            PackSetTBA(payable(tbaAddress)).transferNFT(
+                userWalletAddres,
+                ps100TokenIds[i]
+            );
         }
-        // burn
-        burn(tokenId);
+        _burn(tokenId);
 
         // 100パックセットまでの開封でよければ終了
         if (unpackIndicator == address(packSet100)) {
@@ -35,10 +38,10 @@ contract PackSet600 is ERC721 {
         }
 
         // 100パックセット以降も開封
-        for (uint256 i; i < tokenIds100.length; i++) {
-            tbaAddresses100[i] = packSet100.recursiveUnpack(
+        for (uint256 i; i < ps100TokenIds.length; i++) {
+            packSet100.recursiveUnpack(
                 userWalletAddres,
-                tokenIds100[i],
+                ps100TokenIds[i],
                 unpackIndicator
             );
         }
